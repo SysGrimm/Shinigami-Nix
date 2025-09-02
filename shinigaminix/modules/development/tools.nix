@@ -104,7 +104,7 @@
     # Cloud tools
     awscli2         # AWS CLI
     google-cloud-sdk # Google Cloud SDK
-    azure-cli       # Azure CLI
+    # azure-cli       # Azure CLI (temporarily disabled due to build issues)
     
     # Infrastructure as code
     terraform       # Infrastructure provisioning

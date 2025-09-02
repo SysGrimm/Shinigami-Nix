@@ -14,7 +14,7 @@
     helix
     
     # Emacs
-    emacs29
+    emacs
     
     # Vim
     vim
@@ -140,14 +140,14 @@
     rust-analyzer    # Rust LSP
     gopls           # Go LSP
     nodePackages.typescript-language-server  # TypeScript LSP
-    nodePackages.pyright  # Python LSP
+    pyright  # Python LSP
     lua-language-server    # Lua LSP
     marksman        # Markdown LSP
     
     # Formatters
     nixpkgs-fmt     # Nix formatter
     rustfmt         # Rust formatter
-    gofmt           # Go formatter
+    # gofmt           # Go formatter (included with go)
     nodePackages.prettier  # JS/TS/JSON formatter
     black           # Python formatter
     

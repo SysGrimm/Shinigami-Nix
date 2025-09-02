@@ -12,13 +12,13 @@
   xdg.portal = {
     enable = true;
     wlr.enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-hyprland
-      xdg-desktop-portal-gtk
+    extraPortals = [
+      inputs.hyprland.packages.${pkgs.system}.xdg-desktop-portal-hyprland
+      pkgs.xdg-desktop-portal-gtk
     ];
-    configPackages = with pkgs; [
-      xdg-desktop-portal-hyprland
-      xdg-desktop-portal-gtk
+    configPackages = [
+      inputs.hyprland.packages.${pkgs.system}.xdg-desktop-portal-hyprland
+      pkgs.xdg-desktop-portal-gtk
     ];
   };
 
@@ -69,7 +69,7 @@
     waybar
     
     # File manager
-    thunar
+    xfce.thunar
     
     # Terminal
     foot
@@ -107,7 +107,7 @@
     
     # Theme tools
     nwg-look
-    qt5ct
+    libsForQt5.qt5ct
     qt6ct
     
     # Fonts
@@ -167,7 +167,7 @@
   # Qt configuration
   qt = {
     enable = true;
-    platformTheme = "qt5ct";
+    platformTheme = lib.mkDefault "qt5ct";
     style = "adwaita-dark";
   };
 

@@ -19,14 +19,14 @@
     # Go
     go
     gopls
-    gofmt
+    # gofmt  # gofmt comes with go package
     golangci-lint
     
     # Python
     python3Full
     python3Packages.pip
     python3Packages.virtualenv
-    python3Packages.poetry
+    poetry
     pyright
     black
     ruff
@@ -110,7 +110,7 @@
     
     # Documentation
     mdbook
-    gitbook-cli
+    # gitbook-cli  # Package not available
     
     # Build tools
     gnumake
@@ -259,7 +259,7 @@
     fira-code-symbols
     jetbrains-mono
     cascadia-code
-    (nerdfonts.override { fonts = [ "FiraCode" "JetBrainsMono" "CascadiaCode" ]; })
+    nerd-fonts.fira-code nerd-fonts.jetbrains-mono
   ];
 
   # Enable nix-ld for running unpatched binaries

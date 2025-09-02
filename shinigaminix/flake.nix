@@ -57,6 +57,7 @@
 
           # Main configuration
           ./hosts/aetherbook/default.nix
+          ./nixpkgs-config.nix
 
           # Home Manager
           home-manager.nixosModules.home-manager

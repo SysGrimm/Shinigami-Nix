@@ -138,21 +138,13 @@
   # Enable dconf for GTK settings
   programs.dconf.enable = true;
 
-  # XDG portal
-  xdg.portal = {
-    enable = true;
-    wlr.enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-gtk
-      xdg-desktop-portal-hyprland
-    ];
-  };
+  # XDG portal configuration handled by hyprland module
 
   # Fonts
   fonts = {
     packages = with pkgs; [
       noto-fonts
-      noto-fonts-cjk
+      noto-fonts-cjk-sans
       noto-fonts-emoji
       liberation_ttf
       fira-code

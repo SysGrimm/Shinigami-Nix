@@ -168,12 +168,12 @@
     "vm.swappiness" = 1;
     
     # Network optimizations
-    "net.core.rmem_default" = 31457280;
-    "net.core.rmem_max" = 134217728;
-    "net.core.wmem_default" = 31457280;
-    "net.core.wmem_max" = 134217728;
-    "net.core.netdev_max_backlog" = 5000;
-    "net.ipv4.tcp_window_scaling" = 1;
+    "net.core.rmem_default" = lib.mkDefault 31457280;
+    "net.core.rmem_max" = lib.mkDefault 134217728;
+    "net.core.wmem_default" = lib.mkDefault 31457280;
+    "net.core.wmem_max" = lib.mkDefault 134217728;
+    "net.core.netdev_max_backlog" = lib.mkDefault 5000;
+    "net.ipv4.tcp_window_scaling" = lib.mkDefault 1;
   };
 
   # Additional hardware support
