@@ -235,7 +235,7 @@ in
   environment.interactiveShellInit = ''
     alias ll='ls -la'
     alias la='ls -la'
-    alias install-nixos='sudo nixos-install --extra-experimental-features "nix-command flakes"'
+    alias install-nixos='sudo NIX_CONFIG="experimental-features = nix-command flakes" nixos-install'
     alias partition='sudo gparted'
     alias check-network='ping -c 3 cache.nixos.org'
     
@@ -345,7 +345,7 @@ in
       echo "Step 4: Starting NixOS installation..."
       echo "This may take a while. Press Enter to continue."
       read
-      sudo nixos-install --extra-experimental-features "nix-command flakes"
+      sudo NIX_CONFIG="experimental-features = nix-command flakes" nixos-install
       
       if [ $? -eq 0 ]; then
         echo ""
@@ -354,7 +354,7 @@ in
         echo "Type 'reboot' when ready."
       else
         echo "❌ Installation failed. Check the error messages above."
-        echo "💡 Tip: You can also try: sudo nixos-install --extra-experimental-features 'nix-command flakes'"
+        echo "💡 Tip: You can also try: sudo NIX_CONFIG='experimental-features = nix-command flakes' nixos-install"
       fi
     }
     
@@ -389,7 +389,7 @@ in
       echo "   - nano /mnt/etc/nixos/configuration.nix"
       echo ""
       echo "6. Install:"
-      echo "   - nixos-install --extra-experimental-features 'nix-command flakes'"
+      echo "   - NIX_CONFIG='experimental-features = nix-command flakes' sudo nixos-install"
       echo "   - Or use alias: install-nixos"
       echo ""
       echo "7. Reboot:"
