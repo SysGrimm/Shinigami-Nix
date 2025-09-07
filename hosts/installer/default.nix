@@ -191,8 +191,6 @@ in
   };
 
   # Live session user (inherits from minimal CD)
-  users.users.nixos.extraGroups = [ "video" "audio" ];
-
   # Enable sudo without password for live session
   security.sudo.wheelNeedsPassword = false;
   users.users.nixos.extraGroups = [ "wheel" "video" "audio" ];
