@@ -1,18 +1,7 @@
 { config, pkgs, lib, modulesPath, ... }:
 
 let
-  shinigaminixPlymouth = pkgs.callPackage .    # System tools
-    tailscale
-    git
-    curl
-    wget
-    neovim
-    networkmanagerapplet
-    pavucontrol
-    brightnessctl
-    xfce.thunar
-    imagemagick  # For logo processing
-  ];inigaminix-plymouth.nix {};
+  shinigaminixPlymouth = pkgs.callPackage ./../../assets/shinigaminix-plymouth.nix {};
 in
 
 {
