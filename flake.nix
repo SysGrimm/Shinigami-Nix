@@ -8,6 +8,10 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hyprland = {
+      url = "github:hyprwm/Hyprland";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Overlay to patch linux-pam for cross-compilation
     linuxPamNoMan = {
       url = "github:numtide/flake-utils";
@@ -30,7 +34,7 @@
     ];
   };
 
-  outputs = { self, nixpkgs, nixos-hardware, nixos-generators, ... }:
+  outputs = { self, nixpkgs, nixos-hardware, nixos-generators, hyprland, ... }:
   let
     # Overlay to disable 'man' output for linux-pam when cross-compiling
     pamNoManOverlay = final: prev: {
@@ -144,5 +148,16 @@
         ];
       };
     });
+    
+    # NixOS configurations
+    nixosConfigurations = {
+      installer = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inputs = { inherit hyprland; }; };
+        modules = [
+          ./hosts/installer/default.nix
+        ];
+      };
+    };
   };
 }

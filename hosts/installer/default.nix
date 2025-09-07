@@ -1,7 +1,8 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, modulesPath, ... }:
 
 {
   imports = [
+    "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
     ../../modules/desktop/hyprland.nix
   ];
 
@@ -28,10 +29,18 @@
   # Steam needs 32-bit libraries
   hardware.opengl.driSupport32Bit = true;
 
-  # General optimizations for compatibility
-  services.xserver.videoDrivers = [ "modesetting" "intel" "nvidia" "amdgpu" ];
-  boot.kernelModules = [ "kvm-intel" "kvm-amd" ];
-  boot.supportedFilesystems = [ "btrfs" "ext4" "ntfs" "vfat" ];
+  # Hardware compatibility for various systems
+  hardware.enableRedistributableFirmware = true;
+  hardware.enableAllFirmware = true;
+
+  # Boot configuration for live ISO
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+  boot.supportedFilesystems = [ "btrfs" "ext4" "ntfs" "vfat" "zfs" ];
+  
+  # Network and hardware detection
+  hardware.bluetooth.enable = true;
+  services.blueman.enable = true;
 
   # Enable networking
   networking.networkmanager.enable = true;

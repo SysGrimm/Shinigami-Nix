@@ -1,11 +1,15 @@
-{ config, lib, pkgs, inputs, ... }:
+{ config, lib, pkgs, inputs ? {}, ... }:
 
 {
   # Enable Hyprland
   programs.hyprland = {
     enable = true;
-    package = inputs.hyprland.packages.${pkgs.system}.hyprland;
-    portalPackage = inputs.hyprland.packages.${pkgs.system}.xdg-desktop-portal-hyprland;
+    package = if inputs ? hyprland 
+              then inputs.hyprland.packages.${pkgs.system}.hyprland
+              else pkgs.hyprland;
+    portalPackage = if inputs ? hyprland
+                   then inputs.hyprland.packages.${pkgs.system}.xdg-desktop-portal-hyprland
+                   else pkgs.xdg-desktop-portal-hyprland;
   };
 
   # XDG portal configuration for Hyprland
@@ -13,11 +17,15 @@
     enable = true;
     wlr.enable = true;
     extraPortals = [
-      inputs.hyprland.packages.${pkgs.system}.xdg-desktop-portal-hyprland
+      (if inputs ? hyprland
+       then inputs.hyprland.packages.${pkgs.system}.xdg-desktop-portal-hyprland
+       else pkgs.xdg-desktop-portal-hyprland)
       pkgs.xdg-desktop-portal-gtk
     ];
     configPackages = [
-      inputs.hyprland.packages.${pkgs.system}.xdg-desktop-portal-hyprland
+      (if inputs ? hyprland
+       then inputs.hyprland.packages.${pkgs.system}.xdg-desktop-portal-hyprland
+       else pkgs.xdg-desktop-portal-hyprland)
       pkgs.xdg-desktop-portal-gtk
     ];
   };

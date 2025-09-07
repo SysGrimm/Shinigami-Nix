@@ -24,7 +24,6 @@ jobs:
 
       - name: Build NixOS ISO
         run: |
-          cd hosts/installer
           nix build .#nixosConfigurations.installer.config.system.build.isoImage --print-build-logs
 
       - name: Set ISO version
@@ -35,7 +34,7 @@ jobs:
 
       - name: Rename ISO with version
         run: |
-          mv hosts/installer/result/iso/*.iso nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
+          mv result/iso/*.iso nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
