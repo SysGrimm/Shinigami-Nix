@@ -218,12 +218,261 @@ in
     };
   };
 
+  # Add installer utility scripts
+  environment.systemPackages = environment.systemPackages ++ [
+    (pkgs.writeScriptBin "fix-filesystems" ''
+      #!/bin/bash
+      
+      echo "🔧 Filesystem Configuration Checker"
+      echo "===================================="
+      echo ""
+      
+      echo "Checking mounted filesystems..."
+      lsblk
+      echo ""
+      
+      echo "Checking if /mnt is mounted..."
+      if ! mountpoint -q /mnt; then
+        echo "❌ Error: /mnt is not mounted!"
+        echo ""
+        echo "Available disks:"
+        sudo fdisk -l | grep "Disk /dev"
+        echo ""
+        echo "Please mount your root partition manually:"
+        echo "  sudo mount /dev/sdX1 /mnt  # Replace X1 with your root partition"
+        echo "  sudo mkdir -p /mnt/boot"
+        echo "  sudo mount /dev/sdX2 /mnt/boot  # Replace X2 with your boot partition"
+        exit 1
+      fi
+      echo "✅ /mnt is mounted"
+      
+      echo ""
+      echo "Checking hardware configuration..."
+      if [ ! -f /mnt/etc/nixos/hardware-configuration.nix ]; then
+        echo "⚠️  hardware-configuration.nix not found. Generating..."
+        sudo nixos-generate-config --root /mnt
+        if [ $? -eq 0 ]; then
+          echo "✅ Hardware configuration generated"
+        else
+          echo "❌ Failed to generate hardware configuration"
+          exit 1
+        fi
+      else
+        echo "✅ Hardware configuration exists"
+      fi
+      
+      echo ""
+      echo "Checking filesystem configuration..."
+      if grep -q "fileSystems" /mnt/etc/nixos/hardware-configuration.nix; then
+        echo "✅ Filesystem configuration found"
+        echo ""
+        echo "Current filesystem configuration:"
+        grep -A 10 "fileSystems" /mnt/etc/nixos/hardware-configuration.nix
+      else
+        echo "❌ No filesystem configuration found!"
+        echo "Re-generating hardware configuration..."
+        sudo nixos-generate-config --root /mnt --force
+        if grep -q "fileSystems" /mnt/etc/nixos/hardware-configuration.nix; then
+          echo "✅ Fixed! Filesystem configuration generated"
+        else
+          echo "❌ Still no filesystem configuration. Manual intervention required."
+          echo ""
+          echo "Please check:"
+          echo "1. Are your partitions properly mounted to /mnt?"
+          echo "2. Is the disk partitioned correctly?"
+          echo "3. Try running: sudo nixos-generate-config --root /mnt --force"
+          exit 1
+        fi
+      fi
+      
+      echo ""
+      echo "🎉 Filesystem configuration looks good!"
+      echo "You can now proceed with installation using: quick-install"
+    '')
+    
+    (pkgs.writeScriptBin "quick-install" ''
+      #!/bin/bash
+      
+      echo "🚀 ShinigamiNix Installation Guide"
+      echo "=================================="
+      echo ""
+      echo "⚠️  This will install ShinigamiNix from the GitHub repository."
+      echo "Make sure your disk is partitioned and mounted to /mnt first!"
+      echo ""
+      echo "📋 Quick checklist:"
+      echo "1. ✓ Disk partitioned (EFI + root + swap)"
+      echo "2. ✓ Partitions formatted"
+      echo "3. ✓ Root mounted to /mnt"
+      echo "4. ✓ Boot partition mounted to /mnt/boot"
+      echo "5. ✓ Swap activated"
+      echo ""
+      echo "If you need help with partitioning, type 'nixos-help' first."
+      echo "Press Enter to continue with installation or Ctrl+C to abort."
+      read
+      
+      echo ""
+      echo "Step 1: Checking filesystem configuration..."
+      if ! fix-filesystems; then
+        echo "❌ Filesystem check failed. Please fix the issues above first."
+        exit 1
+      fi
+      
+      echo ""
+      echo "Step 2: Checking network connectivity..."
+      if ! ping -c 3 cache.nixos.org >/dev/null 2>&1; then
+        echo "⚠️  Network issues detected!"
+        echo "Would you like to run network diagnostics? (y/N)"
+        read net_choice
+        if [[ "$net_choice" =~ ^[Yy]$ ]]; then
+          fix-network
+        else
+          echo "⚠️  Proceeding without network check - installation may fail"
+        fi
+      else
+        echo "✅ Network connection verified"
+      fi
+      
+      echo ""
+      echo "Step 3: Installing ShinigamiNix..."
+      echo "This will download and install the complete ShinigamiNix system."
+      echo "The installation may take 15-30 minutes depending on your internet speed."
+      echo ""
+      echo "Press Enter to start installation or Ctrl+C to abort."
+      read
+      
+      echo "🔄 Starting installation..."
+      cd /mnt/etc/nixos
+      sudo NIX_CONFIG="experimental-features = nix-command flakes" nixos-install --flake github:SysGrimm/ShinigamiNix#installer
+      
+      if [ $? -eq 0 ]; then
+        echo ""
+        echo "🎉 ShinigamiNix installation completed successfully!"
+        echo ""
+        echo "Next steps:"
+        echo "1. Set a root password: sudo nixos-enter --root /mnt -c 'passwd'"
+        echo "2. Create a user account: sudo nixos-enter --root /mnt -c 'useradd -m -G wheel username'"
+        echo "3. Set user password: sudo nixos-enter --root /mnt -c 'passwd username'"
+        echo "4. Reboot and remove installation media"
+        echo ""
+        echo "Type 'reboot' when ready to restart into ShinigamiNix!"
+      else
+        echo ""
+        echo "❌ Installation failed!"
+        echo ""
+        echo "🔧 Troubleshooting tips:"
+        echo "1. Check filesystem configuration: fix-filesystems"
+        echo "2. Check network: fix-network"
+        echo "3. Try manual installation:"
+        echo "   sudo NIX_CONFIG='experimental-features = nix-command flakes' nixos-install --flake github:SysGrimm/ShinigamiNix#installer"
+        echo ""
+        echo "Check the error messages above for specific issues."
+      fi
+    '')
+    
+    (pkgs.writeScriptBin "fix-network" ''
+      #!/bin/bash
+      
+      echo "🌐 Network Troubleshooting"
+      echo "========================="
+      echo ""
+      
+      echo "Checking network interfaces..."
+      ip link show
+      echo ""
+      
+      echo "Checking IP addresses..."
+      ip addr show
+      echo ""
+      
+      echo "Testing connectivity..."
+      echo "Ping Google DNS (8.8.8.8):"
+      if ping -c 3 8.8.8.8 >/dev/null 2>&1; then
+        echo "✅ Internet connectivity working"
+      else
+        echo "❌ No internet connectivity"
+      fi
+      
+      echo ""
+      echo "Ping NixOS cache:"
+      if ping -c 3 cache.nixos.org >/dev/null 2>&1; then
+        echo "✅ NixOS cache reachable"
+      else
+        echo "❌ Cannot reach NixOS cache"
+        echo "This may cause installation issues."
+      fi
+      
+      echo ""
+      echo "DNS Resolution test:"
+      if nslookup cache.nixos.org >/dev/null 2>&1; then
+        echo "✅ DNS resolution working"
+      else
+        echo "❌ DNS resolution failed"
+        echo "Setting fallback DNS..."
+        echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+        echo "nameserver 8.8.4.4" | sudo tee -a /etc/resolv.conf
+      fi
+      
+      echo ""
+      echo "🔧 Manual network setup options:"
+      echo "1. WiFi setup: nmtui"
+      echo "2. Ethernet: check cable connection"
+      echo "3. Manual IP: ip addr add 192.168.1.100/24 dev eth0"
+      echo "4. Manual route: ip route add default via 192.168.1.1"
+    '')
+    
+    (pkgs.writeScriptBin "nixos-help" ''
+      #!/bin/bash
+      
+      echo "🛠️ ShinigamiNix Installation Guide"
+      echo "=================================="
+      echo ""
+      echo "📋 STEP-BY-STEP INSTALLATION:"
+      echo ""
+      echo "1. Partition your disk:"
+      echo "   - Open GParted: gparted"
+      echo "   - Create EFI partition (512MB, fat32)"
+      echo "   - Create root partition (rest of disk, ext4)"
+      echo "   - Optionally create swap partition"
+      echo ""
+      echo "2. Mount partitions:"
+      echo "   - mount /dev/sdX2 /mnt"
+      echo "   - mkdir -p /mnt/boot"
+      echo "   - mount /dev/sdX1 /mnt/boot"
+      echo ""
+      echo "3. Generate hardware config:"
+      echo "   - nixos-generate-config --root /mnt"
+      echo ""
+      echo "4. Install ShinigamiNix:"
+      echo "   - Use: quick-install (recommended)"
+      echo "   - Or manual: install-nixos"
+      echo ""
+      echo "5. Reboot:"
+      echo "   - reboot"
+      echo ""
+      echo "🌐 NETWORK TROUBLESHOOTING:"
+      echo "   - Check connection: ping cache.nixos.org"
+      echo "   - Fix network: fix-network"
+      echo "   - Check WiFi: nmtui (NetworkManager TUI)"
+      echo "   - Manual DNS: echo 'nameserver 8.8.8.8' | sudo tee /etc/resolv.conf"
+      echo ""
+      echo "🔧 FILESYSTEM TROUBLESHOOTING:"
+      echo "   - Check/fix filesystems: fix-filesystems"
+      echo "   - Check mounts: lsblk or mount | grep /mnt"
+      echo "   - Re-generate config: sudo nixos-generate-config --root /mnt --force"
+      echo ""
+      echo "💡 TIPS:"
+      echo "   - Use 'lsblk' to see your disks"
+      echo "   - Use 'quick-install' for guided installation"
+      echo "   - Use 'gparted' for easy GUI partitioning"
+      echo "   - Use 'fix-network' if you have connectivity issues"
+      echo ""
+    '')
+  ];
+
   # Live session user (inherits from minimal CD)
   # Enable sudo without password for live session
   security.sudo.wheelNeedsPassword = false;
-  users.users.nixos.extraGroups = [ "wheel" "video" "audio" ];
-
-  # Enable helpful services for installation
+  users.users.nixos.extraGroups = [ "wheel" "video" "audio" ];  # Enable helpful services for installation
   services.udisks2.enable = true;  # Auto-mounting
   services.gvfs.enable = true;     # Virtual filesystem
   
@@ -235,7 +484,7 @@ in
   environment.interactiveShellInit = ''
     alias ll='ls -la'
     alias la='ls -la'
-    alias install-nixos='sudo NIX_CONFIG="experimental-features = nix-command flakes" nixos-install'
+          install-nixos = "sudo NIX_CONFIG='experimental-features = nix-command flakes' nixos-install --flake github:SysGrimm/ShinigamiNix#installer";
     alias partition='sudo gparted'
     alias check-network='ping -c 3 cache.nixos.org'
     
