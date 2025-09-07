@@ -42,7 +42,13 @@ jobs:
       - name: Rename ISO with version
         run: |
           # Find the ISO file (nixos-generators puts it in result/iso/ for ISO format)
-          ISO_FILE=$(find result -name "*.iso" -type f | head -1)
+          if [ -f "result/iso/ShinigamiNix.iso" ]; then
+            ISO_FILE="result/iso/ShinigamiNix.iso"
+          else
+            # Fallback: search for any .iso file
+            ISO_FILE=$(find result -name "*.iso" -type f | head -1)
+          fi
+          
           if [ -z "$ISO_FILE" ]; then
             echo "No ISO file found in result directory"
             echo "Contents of result directory:"
@@ -51,6 +57,7 @@ jobs:
             ls -la result/iso/ || echo "result/iso/ does not exist"
             exit 1
           fi
+          
           echo "Found ISO file: $ISO_FILE"
           cp "$ISO_FILE" nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
           chmod 644 nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
