@@ -158,8 +158,8 @@ in
         Version=1.0
         Type=Application
         Name=Install NixOS
-        Comment=Start NixOS Installation
-        Exec=kitty --title NixOS-Installer -e sudo nixos-install
+        Comment=Guided NixOS Installation
+        Exec=kitty --title NixOS-Installer -e bash -c 'source /etc/bashrc; quick-install; echo "Press Enter to close..."; read'
         Icon=system-software-install
         Terminal=false
         Categories=System;
@@ -214,14 +214,77 @@ in
     alias install-nixos='sudo nixos-install'
     alias partition='sudo gparted'
     
+    # Quick installation script
+    quick-install() {
+      echo "ShinigamiNix Quick Installation:"
+      echo "================================"
+      echo ""
+      echo "⚠️  WARNING: This will guide you through installation step by step."
+      echo "Make sure you have partitioned and mounted your disk first!"
+      echo ""
+      echo "Have you already:"
+      echo "1. Partitioned your disk (using gparted or fdisk)?"
+      echo "2. Formatted your partitions?"
+      echo "3. Mounted them to /mnt?"
+      echo ""
+      echo "If YES, press Enter to continue. If NO, type 'nixos-help' first."
+      read
+      
+      echo "Step 1: Checking if /mnt is mounted..."
+      if ! mountpoint -q /mnt; then
+        echo "❌ Error: /mnt is not mounted!"
+        echo "Please mount your root partition first: mount /dev/sdX2 /mnt"
+        return 1
+      fi
+      echo "✅ /mnt is mounted"
+      
+      echo ""
+      echo "Step 2: Generating NixOS configuration..."
+      sudo nixos-generate-config --root /mnt
+      if [ $? -eq 0 ]; then
+        echo "✅ Configuration generated successfully"
+      else
+        echo "❌ Failed to generate configuration"
+        return 1
+      fi
+      
+      echo ""
+      echo "Step 3: Configuration file created at /mnt/etc/nixos/configuration.nix"
+      echo "Would you like to edit it now? (y/N)"
+      read edit_choice
+      if [[ "$edit_choice" =~ ^[Yy]$ ]]; then
+        sudo nano /mnt/etc/nixos/configuration.nix
+      fi
+      
+      echo ""
+      echo "Step 4: Starting NixOS installation..."
+      echo "This may take a while. Press Enter to continue."
+      read
+      sudo nixos-install
+      
+      if [ $? -eq 0 ]; then
+        echo ""
+        echo "🎉 Installation completed successfully!"
+        echo "You can now reboot and remove the installation media."
+        echo "Type 'reboot' when ready."
+      else
+        echo "❌ Installation failed. Check the error messages above."
+      fi
+    }
+    
     # Show installation help
     nixos-help() {
       echo "ShinigamiNix Installation Guide:"
       echo "================================"
       echo ""
+      echo "🚀 QUICK START: Type 'quick-install' for guided installation"
+      echo ""
+      echo "📋 MANUAL INSTALLATION STEPS:"
+      echo ""
       echo "1. Partition your disk:"
       echo "   - GUI: Run 'gparted' or click 'Partition Disks' on desktop"
       echo "   - CLI: Use 'fdisk /dev/sdX' or 'parted /dev/sdX'"
+      echo "   - Create: EFI partition (512MB, FAT32) + Root partition (rest, ext4)"
       echo ""
       echo "2. Format partitions:"
       echo "   - EFI: mkfs.fat -F 32 /dev/sdX1"
@@ -229,11 +292,12 @@ in
       echo ""
       echo "3. Mount partitions:"
       echo "   - mount /dev/sdX2 /mnt"
-      echo "   - mkdir /mnt/boot"
+      echo "   - mkdir -p /mnt/boot"
       echo "   - mount /dev/sdX1 /mnt/boot"
       echo ""
-      echo "4. Generate config:"
+      echo "4. ⚠️  IMPORTANT: Generate config FIRST:"
       echo "   - nixos-generate-config --root /mnt"
+      echo "   - This creates /mnt/etc/nixos/configuration.nix"
       echo ""
       echo "5. Edit config (optional):"
       echo "   - nano /mnt/etc/nixos/configuration.nix"
@@ -243,6 +307,11 @@ in
       echo ""
       echo "7. Reboot:"
       echo "   - reboot"
+      echo ""
+      echo "💡 TIPS:"
+      echo "   - Use 'lsblk' to see your disks"
+      echo "   - Use 'quick-install' for guided installation"
+      echo "   - Use 'gparted' for easy GUI partitioning"
       echo ""
     }
   '';
