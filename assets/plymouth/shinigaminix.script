@@ -1,0 +1,62 @@
+# ShinigamiNix Plymouth Theme Script
+
+# Set background color to black
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
+
+# Load the logo image
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+
+# Center the logo on screen
+logo.sprite.SetX(Window.GetWidth() / 2 - logo.image.GetWidth() / 2);
+logo.sprite.SetY(Window.GetHeight() / 2 - logo.image.GetHeight() / 2);
+
+# Progress bar setup
+progress_box.image = Image("progress_box.png");
+progress_box.sprite = Sprite(progress_box.image);
+progress_box.x = Window.GetWidth() / 2 - progress_box.image.GetWidth() / 2;
+progress_box.y = Window.GetHeight() * 0.75;
+progress_box.sprite.SetPosition(progress_box.x, progress_box.y, 0);
+
+progress_bar.original_image = Image("progress_bar.png");
+progress_bar.sprite = Sprite();
+progress_bar.x = Window.GetWidth() / 2 - progress_bar.original_image.GetWidth() / 2;
+progress_bar.y = Window.GetHeight() * 0.75;
+progress_bar.sprite.SetPosition(progress_bar.x, progress_bar.y, 1);
+
+# Progress callback
+fun progress_callback(duration, progress) {
+    if (progress_bar.original_image.GetWidth() > 0) {
+        progress_bar.image = progress_bar.original_image.Scale(progress_bar.original_image.GetWidth() * progress, progress_bar.original_image.GetHeight());
+        progress_bar.sprite.SetImage(progress_bar.image);
+    }
+}
+
+Plymouth.SetBootProgressFunction(progress_callback);
+
+# Message display
+message_sprite = Sprite();
+message_sprite.SetPosition(10, 10, 10000);
+
+fun message_callback(text) {
+    my_image = Image.Text(text, 1, 1, 1);
+    message_sprite.SetImage(my_image);
+}
+
+Plymouth.SetMessageFunction(message_callback);
+
+# Password dialog
+fun question_callback(prompt, entry) {
+    question_window.image = Image("box.png");
+    question_window.sprite = Sprite(question_window.image);
+    question_window.sprite.SetX(Window.GetWidth() / 2 - question_window.image.GetWidth() / 2);
+    question_window.sprite.SetY(Window.GetHeight() / 2 - question_window.image.GetHeight() / 2);
+    
+    question_entry.image = Image.Text(entry, 1, 1, 1);
+    question_entry.sprite = Sprite(question_entry.image);
+    question_entry.sprite.SetX(question_window.sprite.GetX() + 50);
+    question_entry.sprite.SetY(question_window.sprite.GetY() + 50);
+}
+
+Plymouth.SetDisplayQuestionFunction(question_callback);

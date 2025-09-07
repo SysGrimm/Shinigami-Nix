@@ -1,66 +1,9 @@
 { config, pkgs, lib, modulesPath, ... }:
 
-let
-  shinigaminixPlymouth = pkgs.callPackage .    # System tools
-    tailscale
-    git
-    curl
-    wget
-    neovim
-    networkmanagerapplet
-    pavucontrol
-    brightnessctl
-    xfce.thunar
-    imagemagick  # For logo processing
-  ];inigaminix-plymouth.nix {};
-in
-
 {
   imports = [
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
   ];
-
-  # Custom ISO branding and boot configuration
-  isoImage = {
-    isoName = "ShinigamiNix-installer.iso";
-    makeEfiBootable = true;
-    makeUsbBootable = true;
-    
-    # Boot menu branding
-    isoBaseName = "ShinigamiNix";
-    volumeID = "SHINIGAMI_NIX";
-    
-    # Grub theme configuration
-    grubTheme = pkgs.nixos-grub2-theme.override {
-      bootloaderBackgroundColor = "#000000";
-      bootloaderTitleColor = "#D4B896";
-      bootloaderMenuColor = "#D4B896";
-    };
-  };
-
-  # Plymouth boot splash
-  boot.plymouth = {
-    enable = true;
-    themePackages = [ shinigaminixPlymouth ];
-    theme = "shinigaminix";
-  };
-
-  # Kernel parameters for better boot experience
-  boot.kernelParams = [ 
-    "quiet" 
-    "splash" 
-    "loglevel=3"
-    "rd.systemd.show_status=false"
-    "rd.udev.log_level=3"
-    "udev.log_priority=3"
-  ];
-
-  # Console settings for boot
-  console = {
-    font = "ter-128n";
-    packages = [ pkgs.terminus_font ];
-    earlySetup = true;
-  };
 
   # Enable Hyprland
   programs.hyprland.enable = true;
