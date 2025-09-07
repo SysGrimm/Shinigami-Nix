@@ -24,7 +24,14 @@ jobs:
 
       - name: Build NixOS ISO
         run: |
-          nix build .#nixosConfigurations.installer.config.system.build.isoImage --print-build-logs --accept-flake-config
+          nix build .#installer-iso --print-build-logs --accept-flake-config
+
+      - name: Debug result directory
+        run: |
+          echo "Contents of result directory:"
+          ls -la result/
+          echo "Looking for ISO files:"
+          find result -name "*.iso" -type f
 
       - name: Set ISO version
         id: version
@@ -34,7 +41,14 @@ jobs:
 
       - name: Rename ISO with version
         run: |
-          cp result/iso/*.iso nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
+          # Find the ISO file (nixos-generators puts it directly in result/)
+          ISO_FILE=$(find result -name "*.iso" -type f | head -1)
+          if [ -z "$ISO_FILE" ]; then
+            echo "No ISO file found in result directory"
+            ls -la result/
+            exit 1
+          fi
+          cp "$ISO_FILE" nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
           chmod 644 nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
 
       - name: Upload ISO artifact

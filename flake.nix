@@ -1,5 +1,5 @@
 {
-  description = "SoulBox - Declarative Media Center for Raspberry Pi 5";
+  description = "ShinigamiNix - Custom NixOS distribution with Hyprland for gaming and development";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -11,10 +11,6 @@
     hyprland = {
       url = "github:hyprwm/Hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-    # Overlay to patch linux-pam for cross-compilation
-    linuxPamNoMan = {
-      url = "github:numtide/flake-utils";
     };
   };
   
@@ -36,121 +32,12 @@
 
   outputs = { self, nixpkgs, nixos-hardware, nixos-generators, hyprland, ... }:
   let
-    # Overlay to disable 'man' output for linux-pam when cross-compiling
-    pamNoManOverlay = final: prev: {
-      linux-pam = prev.linux-pam.overrideAttrs (old: {
-        outputs = [ "out" ];
-      });
-    };
-    # Support both native aarch64 builds and cross-compilation from x86_64
     supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
-    
-    # Helper function to create packages for each system
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-    
-    # Helper function to create cross-compilation nixpkgs
-    mkCrossPkgs = system: import nixpkgs {
-      inherit system;
-      crossSystem = {
-        config = "aarch64-unknown-linux-gnu";
-      };
-      overlays = [ pamNoManOverlay ];
-      config = {
-        allowUnsupportedSystem = true;
-      };
-    };
-    
-    # Helper function to create native aarch64 nixpkgs
-    mkNativePkgs = system: import nixpkgs {
-      inherit system;
-      config = {
-        allowUnsupportedSystem = true;
-      };
-    };
   in {
-    # Base NixOS configurations without image building
-    nixosConfigurations = {
-      soulbox-pi5 = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [
-          "${nixos-hardware}/raspberry-pi/5"
-          ./soulbox-nixos-configuration.nix
-          {
-            # Basic Raspberry Pi 5 configuration
-            system.stateVersion = "24.05";
-          }
-        ];
-      };
-      
-      soulbox-zero2w = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [
-          "${nixos-hardware}/raspberry-pi/zero-2w"
-          ./soulbox-zero2w-configuration.nix
-          {
-            # Basic Pi Zero 2W configuration
-            system.stateVersion = "24.05";
-          }
-        ];
-      };
-    };
-    
-    # Use nixos-generators to create SD images - support both x86_64 and aarch64 hosts
-    packages = forAllSystems (system: {
-      soulbox-pi5-image = nixos-generators.nixosGenerate {
-        # Use host system for building (where the build is running)
-        system = system;
-        # Use cross-compilation pkgs when building from x86_64
-        pkgs = if system == "aarch64-linux" 
-               then mkNativePkgs system
-               else mkCrossPkgs system;
-        format = "sd-aarch64";
-        modules = [
-          "${nixos-hardware}/raspberry-pi/5"
-          ./soulbox-nixos-configuration.nix
-          {
-            # Image-specific configuration - target aarch64
-            system.stateVersion = "24.05";
-            # Set target system to aarch64 for the generated image
-            nixpkgs.system = "aarch64-linux";
-            # Enable cross-compilation when building from x86_64
-            nixpkgs.crossSystem = nixpkgs.lib.mkIf (system != "aarch64-linux") {
-              config = "aarch64-unknown-linux-gnu";
-            };
-            # Disable problematic binfmt registration for cross-compilation
-            boot.binfmt.registrations = {};
-          }
-        ];
-      };
-      
-      soulbox-zero2w-image = nixos-generators.nixosGenerate {
-        # Use host system for building
-        system = system;
-        pkgs = if system == "aarch64-linux" 
-               then mkNativePkgs system
-               else mkCrossPkgs system;
-        format = "sd-aarch64";
-        modules = [
-          "${nixos-hardware}/raspberry-pi/zero-2w"
-          ./soulbox-zero2w-configuration.nix
-          {
-            # Image-specific configuration - target aarch64
-            system.stateVersion = "24.05";
-            # Set target system to aarch64 for the generated image
-            nixpkgs.system = "aarch64-linux";
-            # Cross-compilation configuration
-            nixpkgs.crossSystem = nixpkgs.lib.mkIf (system != "aarch64-linux") {
-              config = "aarch64-unknown-linux-gnu";
-            };
-            # Enable QEMU emulation for cross-compilation
-            boot.binfmt.emulatedSystems = nixpkgs.lib.mkIf (system != "aarch64-linux") [ "aarch64-linux" ];
-          }
-        ];
-      };
-    });
-    
     # NixOS configurations
     nixosConfigurations = {
+      # Installer ISO configuration
       installer = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inputs = { inherit hyprland; }; };
@@ -158,6 +45,55 @@
           ./hosts/installer/default.nix
         ];
       };
+      
+      # Framework 13 host configuration
+      aetherbook = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inputs = { inherit hyprland; }; };
+        modules = [
+          nixos-hardware.nixosModules.framework-13-7040-amd
+          ./hosts/aetherbook/default.nix
+          ./modules/hardware/framework13.nix
+          ./modules/desktop/hyprland.nix
+          ./modules/development
+          ./modules/gaming
+        ];
+      };
     };
+
+    # Package outputs
+    packages = forAllSystems (system: {
+      # Installer ISO
+      installer-iso = nixos-generators.nixosGenerate {
+        system = system;
+        format = "iso";
+        modules = [
+          ./hosts/installer/default.nix
+          {
+            # ISO-specific configuration
+            system.stateVersion = "24.05";
+            # Allow unfree packages for Steam, etc.
+            nixpkgs.config.allowUnfree = true;
+          }
+        ];
+        specialArgs = { 
+          inputs = { inherit hyprland; };
+        };
+      };
+      
+      # Default package
+      default = self.packages.${system}.installer-iso;
+    });
+
+    # Development shell
+    devShells = forAllSystems (system: {
+      default = nixpkgs.legacyPackages.${system}.mkShell {
+        buildInputs = with nixpkgs.legacyPackages.${system}; [
+          nixpkgs-fmt
+          statix
+          deadnix
+        ];
+      };
+    });
   };
 }
