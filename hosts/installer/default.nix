@@ -144,7 +144,7 @@ in
     # Network troubleshooting tools
     wget
     curl
-    ping
+    iputils               # ping, traceroute, etc.
     dig
     nmap
     iw                    # Wireless tools
