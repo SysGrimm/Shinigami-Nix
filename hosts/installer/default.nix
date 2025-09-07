@@ -16,7 +16,7 @@ in
     makeUsbBootable = true;
     
     # Boot menu branding
-    isoBaseName = "ShinigamiNix";
+    isoBaseName = lib.mkForce "ShinigamiNix";
     volumeID = "SHINIGAMI_NIX";
     
     # Grub theme configuration
