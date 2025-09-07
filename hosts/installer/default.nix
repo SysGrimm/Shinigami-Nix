@@ -651,7 +651,7 @@ in
       
       echo "🔄 Starting installation..."
       cd /mnt/etc/nixos
-      sudo NIX_CONFIG="experimental-features = nix-command flakes" nixos-install --flake github:SysGrimm/ShinigamiNix#installer
+      sudo NIX_CONFIG="experimental-features = nix-command flakes" nixos-install --flake github:SysGrimm/ShinigamiNix#installer --no-write-lock-file
       
       if [ $? -eq 0 ]; then
         echo ""
@@ -672,7 +672,7 @@ in
         echo "1. Check filesystem configuration: fix-filesystems"
         echo "2. Check network: fix-network"
         echo "3. Try manual installation:"
-        echo "   sudo NIX_CONFIG='experimental-features = nix-command flakes' nixos-install --flake github:SysGrimm/ShinigamiNix#installer"
+        echo "   sudo NIX_CONFIG='experimental-features = nix-command flakes' nixos-install --flake github:SysGrimm/ShinigamiNix#installer --no-write-lock-file"
         echo ""
         echo "Check the error messages above for specific issues."
       fi
