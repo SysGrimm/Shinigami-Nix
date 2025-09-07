@@ -1,0 +1,45 @@
+name: Build NixOS Hyprland ISO
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Show Nix version
+        run: nix --version
+
+      - name: Build NixOS ISO
+        run: |
+          cd hosts/installer
+          nix build .#nixosConfigurations.installer.config.system.build.isoImage --print-build-logs
+
+      - name: Set ISO version
+        id: version
+        run: |
+          VERSION=$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Rename ISO with version
+        run: |
+          mv hosts/installer/result/iso/*.iso nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nixos-hyprland-installer-${{ steps.version.outputs.version }}
+          path: nixos-hyprland-installer-*.iso
+          if-no-files-found: error
