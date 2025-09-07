@@ -9,6 +9,9 @@ in
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
   ];
 
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+
   # Custom ISO branding and boot configuration
   isoImage = {
     isoName = "ShinigamiNix-installer.iso";
