@@ -130,6 +130,15 @@ in
     dosfstools            # FAT filesystem utilities
     ntfs3g                # NTFS support
     
+    # Network troubleshooting tools
+    wget
+    curl
+    ping
+    dig
+    nmap
+    iw                    # Wireless tools
+    networkmanager
+    
     # Text editors for config editing
     nano
     vim
@@ -207,12 +216,62 @@ in
   services.udisks2.enable = true;  # Auto-mounting
   services.gvfs.enable = true;     # Virtual filesystem
   
+  # Network services
+  networking.networkmanager.enable = true;
+  networking.wireless.enable = false;  # Disable wpa_supplicant (conflicts with NetworkManager)
+  
   # Add helpful aliases and scripts
   environment.interactiveShellInit = ''
     alias ll='ls -la'
     alias la='ls -la'
     alias install-nixos='sudo nixos-install'
     alias partition='sudo gparted'
+    alias check-network='ping -c 3 cache.nixos.org'
+    
+    # Network troubleshooting function
+    fix-network() {
+      echo "Network Troubleshooting:"
+      echo "========================"
+      echo ""
+      echo "1. Checking network connectivity..."
+      if ping -c 3 8.8.8.8 >/dev/null 2>&1; then
+        echo "✅ Internet connection working"
+      else
+        echo "❌ No internet connection"
+        echo "Try: sudo systemctl restart NetworkManager"
+        return 1
+      fi
+      
+      echo ""
+      echo "2. Checking DNS resolution..."
+      if ping -c 3 cache.nixos.org >/dev/null 2>&1; then
+        echo "✅ DNS working - cache.nixos.org reachable"
+      else
+        echo "❌ DNS issues - trying to fix..."
+        echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+        echo "nameserver 1.1.1.1" | sudo tee -a /etc/resolv.conf
+        echo "Retesting..."
+        if ping -c 3 cache.nixos.org >/dev/null 2>&1; then
+          echo "✅ DNS fixed!"
+        else
+          echo "❌ Still having DNS issues"
+          echo "Try connecting to WiFi or ethernet"
+          return 1
+        fi
+      fi
+      
+      echo ""
+      echo "3. Testing cache.nixos.org access..."
+      if curl -s --head https://cache.nixos.org >/dev/null; then
+        echo "✅ Cache server accessible"
+      else
+        echo "⚠️  Cache server issues - installation may be slow"
+        echo "You can still proceed, but packages will build from source"
+      fi
+      
+      echo ""
+      echo "Network diagnostics complete!"
+    }
     
     # Quick installation script
     quick-install() {
@@ -229,6 +288,21 @@ in
       echo ""
       echo "If YES, press Enter to continue. If NO, type 'nixos-help' first."
       read
+      
+      echo ""
+      echo "Step 0: Checking network connectivity..."
+      if ! ping -c 3 cache.nixos.org >/dev/null 2>&1; then
+        echo "⚠️  Network issues detected!"
+        echo "Would you like to run network diagnostics? (y/N)"
+        read net_choice
+        if [[ "$net_choice" =~ ^[Yy]$ ]]; then
+          fix-network
+        else
+          echo "⚠️  Proceeding without network check - installation may fail or be slow"
+        fi
+      else
+        echo "✅ Network connection looks good"
+      fi
       
       echo "Step 1: Checking if /mnt is mounted..."
       if ! mountpoint -q /mnt; then
@@ -308,10 +382,17 @@ in
       echo "7. Reboot:"
       echo "   - reboot"
       echo ""
+      echo "🌐 NETWORK TROUBLESHOOTING:"
+      echo "   - Check connection: ping cache.nixos.org"
+      echo "   - Fix network: fix-network"
+      echo "   - Check WiFi: nmtui (NetworkManager TUI)"
+      echo "   - Manual DNS: echo 'nameserver 8.8.8.8' | sudo tee /etc/resolv.conf"
+      echo ""
       echo "💡 TIPS:"
       echo "   - Use 'lsblk' to see your disks"
       echo "   - Use 'quick-install' for guided installation"
       echo "   - Use 'gparted' for easy GUI partitioning"
+      echo "   - Use 'fix-network' if you have connectivity issues"
       echo ""
     }
   '';
