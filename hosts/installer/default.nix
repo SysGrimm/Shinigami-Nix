@@ -117,7 +117,7 @@ in
     nixos-install-tools    # NixOS installation utilities
     gparted               # Partition manager with GUI
     parted                # Command-line partitioning
-    fdisk                 # Disk partitioning utility
+    util-linux            # Disk utilities including fdisk
     rsync                 # File synchronization
     dosfstools            # FAT filesystem utilities
     ntfs3g                # NTFS support
