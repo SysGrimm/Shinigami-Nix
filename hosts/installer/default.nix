@@ -58,6 +58,17 @@ in
   # Enable Hyprland
   programs.hyprland.enable = true;
 
+  # Enable Nix flakes and other experimental features
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    auto-optimise-store = true;
+  };
+
+  # Nix configuration for installation
+  nix.extraOptions = ''
+    experimental-features = nix-command flakes
+  '';
+
   # Enable Wayland compositor essentials
   services.greetd = {
     enable = true;
@@ -224,7 +235,7 @@ in
   environment.interactiveShellInit = ''
     alias ll='ls -la'
     alias la='ls -la'
-    alias install-nixos='sudo nixos-install'
+    alias install-nixos='sudo nixos-install --extra-experimental-features "nix-command flakes"'
     alias partition='sudo gparted'
     alias check-network='ping -c 3 cache.nixos.org'
     
@@ -334,7 +345,7 @@ in
       echo "Step 4: Starting NixOS installation..."
       echo "This may take a while. Press Enter to continue."
       read
-      sudo nixos-install
+      sudo nixos-install --extra-experimental-features "nix-command flakes"
       
       if [ $? -eq 0 ]; then
         echo ""
@@ -343,6 +354,7 @@ in
         echo "Type 'reboot' when ready."
       else
         echo "❌ Installation failed. Check the error messages above."
+        echo "💡 Tip: You can also try: sudo nixos-install --extra-experimental-features 'nix-command flakes'"
       fi
     }
     
@@ -377,7 +389,8 @@ in
       echo "   - nano /mnt/etc/nixos/configuration.nix"
       echo ""
       echo "6. Install:"
-      echo "   - nixos-install"
+      echo "   - nixos-install --extra-experimental-features 'nix-command flakes'"
+      echo "   - Or use alias: install-nixos"
       echo ""
       echo "7. Reboot:"
       echo "   - reboot"
