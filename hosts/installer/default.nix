@@ -18,13 +18,6 @@ in
     # Boot menu branding
     isoBaseName = lib.mkForce "ShinigamiNix";
     volumeID = "SHINIGAMI_NIX";
-    
-    # Grub theme configuration
-    grubTheme = pkgs.nixos-grub2-theme.override {
-      bootloaderBackgroundColor = "#000000";
-      bootloaderTitleColor = "#D4B896";
-      bootloaderMenuColor = "#D4B896";
-    };
   };
 
   # Plymouth boot splash
