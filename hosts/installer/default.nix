@@ -112,8 +112,132 @@ in
     hyprlock           # Screen locker for Hyprland
     wlogout            # Logout menu for Wayland
     swaynotificationcenter  # Notification center
+    
+    # Installation tools
+    nixos-install-tools    # NixOS installation utilities
+    gparted               # Partition manager with GUI
+    parted                # Command-line partitioning
+    fdisk                 # Disk partitioning utility
+    rsync                 # File synchronization
+    dosfstools            # FAT filesystem utilities
+    ntfs3g                # NTFS support
+    
+    # Text editors for config editing
+    nano
+    vim
   ];
+
+  # Create desktop entries for installation
+  environment.etc = {
+    "skel/.config/autostart/welcome.desktop" = {
+      text = ''
+        [Desktop Entry]
+        Type=Application
+        Name=Welcome to ShinigamiNix
+        Comment=Installation and setup guide
+        Exec=kitty --title "ShinigamiNix Installer" -e bash -c "echo 'Welcome to ShinigamiNix Live Environment!'; echo ''; echo 'To install NixOS:'; echo '1. Run: sudo nixos-install'; echo '2. Or for GUI partitioning: gparted'; echo '3. Need help? Type: nixos-help'; echo ''; echo 'Press Enter to continue...'; read"
+        Icon=distributor-logo-nixos
+        Terminal=false
+        Categories=System;
+        X-GNOME-Autostart-enabled=true
+      '';
+      mode = "0644";
+    };
+    
+    "skel/Desktop/Install NixOS.desktop" = {
+      text = ''
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=Install NixOS
+        Comment=Start NixOS Installation
+        Exec=kitty --title "NixOS Installer" -e sudo nixos-install
+        Icon=system-software-install
+        Terminal=false
+        Categories=System;
+      '';
+      mode = "0755";
+    };
+    
+    "skel/Desktop/Partition Disks.desktop" = {
+      text = ''
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=Partition Disks
+        Comment=Partition disks with GParted
+        Exec=sudo gparted
+        Icon=gparted
+        Terminal=false
+        Categories=System;
+      '';
+      mode = "0755";
+    };
+    
+    "skel/Desktop/Terminal.desktop" = {
+      text = ''
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=Terminal
+        Comment=Open Terminal (type 'nixos-help' for installation guide)
+        Exec=kitty
+        Icon=utilities-terminal
+        Terminal=false
+        Categories=System;TerminalEmulator;
+      '';
+      mode = "0755";
+    };
+  };
 
   # Live session user (inherits from minimal CD)
   users.users.nixos.extraGroups = [ "video" "audio" ];
+
+  # Enable sudo without password for live session
+  security.sudo.wheelNeedsPassword = false;
+  users.users.nixos.extraGroups = [ "wheel" "video" "audio" ];
+
+  # Enable helpful services for installation
+  services.udisks2.enable = true;  # Auto-mounting
+  services.gvfs.enable = true;     # Virtual filesystem
+  
+  # Add helpful aliases and scripts
+  environment.interactiveShellInit = ''
+    alias ll='ls -la'
+    alias la='ls -la'
+    alias install-nixos='sudo nixos-install'
+    alias partition='sudo gparted'
+    
+    # Show installation help
+    nixos-help() {
+      echo "ShinigamiNix Installation Guide:"
+      echo "================================"
+      echo ""
+      echo "1. Partition your disk:"
+      echo "   - GUI: Run 'gparted' or click 'Partition Disks' on desktop"
+      echo "   - CLI: Use 'fdisk /dev/sdX' or 'parted /dev/sdX'"
+      echo ""
+      echo "2. Format partitions:"
+      echo "   - EFI: mkfs.fat -F 32 /dev/sdX1"
+      echo "   - Root: mkfs.ext4 /dev/sdX2"
+      echo ""
+      echo "3. Mount partitions:"
+      echo "   - mount /dev/sdX2 /mnt"
+      echo "   - mkdir /mnt/boot"
+      echo "   - mount /dev/sdX1 /mnt/boot"
+      echo ""
+      echo "4. Generate config:"
+      echo "   - nixos-generate-config --root /mnt"
+      echo ""
+      echo "5. Edit config (optional):"
+      echo "   - nano /mnt/etc/nixos/configuration.nix"
+      echo ""
+      echo "6. Install:"
+      echo "   - nixos-install"
+      echo ""
+      echo "7. Reboot:"
+      echo "   - reboot"
+      echo ""
+    }
+  '';
 }
