@@ -30,7 +30,7 @@ in
     theme = "shinigaminix";
   };
 
-  # Kernel parameters for better boot experience
+  # Kernel parameters for better boot experience and graphics stability
   boot.kernelParams = [ 
     "quiet" 
     "splash" 
@@ -38,6 +38,14 @@ in
     "rd.systemd.show_status=false"
     "rd.udev.log_level=3"
     "udev.log_priority=3"
+    # Graphics stability fixes for flickering
+    "i915.modeset=1"
+    "amdgpu.modeset=1"
+    "nouveau.modeset=1"
+    "radeon.modeset=1"
+    "video=vesafb:off"
+    "video=efifb:off"
+    "drm.debug=0"
   ];
 
   # Console settings for boot

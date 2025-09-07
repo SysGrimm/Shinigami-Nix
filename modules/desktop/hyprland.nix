@@ -32,7 +32,15 @@
 
   # Enable Wayland support for various applications
   environment.sessionVariables = {
+    # Cursor fixes for various hardware
     WLR_NO_HARDWARE_CURSORS = "1";
+    XCURSOR_SIZE = "24";
+    
+    # Graphics compatibility
+    WLR_RENDERER_ALLOW_SOFTWARE = "1";
+    WLR_DRM_NO_ATOMIC = "1";
+    
+    # Wayland app support
     NIXOS_OZONE_WL = "1";
     MOZ_ENABLE_WAYLAND = "1";
     QT_QPA_PLATFORM = "wayland";
@@ -40,6 +48,10 @@
     GDK_BACKEND = "wayland,x11";
     SDL_VIDEODRIVER = "wayland";
     _JAVA_AWT_WM_NONREPARENTING = "1";
+    
+    # Additional stability fixes
+    ELECTRON_OZONE_PLATFORM_HINT = "wayland";
+    ANKI_WAYLAND = "1";
   };
 
   # Security for Hyprland
@@ -64,6 +76,11 @@
     wayland
     wayland-protocols
     wayland-utils
+    
+    # Graphics compatibility tools
+    mesa
+    vulkan-tools
+    glxinfo
     
     # Notifications
     mako
@@ -204,6 +221,11 @@
       
       # Monitor configuration (adjust as needed)
       monitor=,preferred,auto,auto
+      
+      # Graphics compatibility settings for flickering issues
+      env = WLR_NO_HARDWARE_CURSORS,1
+      env = WLR_RENDERER_ALLOW_SOFTWARE,1
+      env = WLR_DRM_NO_ATOMIC,1
       
       # Execute your favorite apps at launch
       exec-once = waybar
