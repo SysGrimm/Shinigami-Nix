@@ -284,24 +284,103 @@ in
       echo "Network diagnostics complete!"
     }
     
+    # Fix filesystem configuration issues
+    fix-filesystems() {
+      echo "🔧 Filesystem Configuration Checker"
+      echo "===================================="
+      echo ""
+      
+      echo "Checking mounted filesystems..."
+      lsblk
+      echo ""
+      
+      echo "Checking if /mnt is mounted..."
+      if ! mountpoint -q /mnt; then
+        echo "❌ Error: /mnt is not mounted!"
+        echo ""
+        echo "Available disks:"
+        sudo fdisk -l | grep "Disk /dev"
+        echo ""
+        echo "Please mount your root partition manually:"
+        echo "  sudo mount /dev/sdX1 /mnt  # Replace X1 with your root partition"
+        echo "  sudo mkdir -p /mnt/boot"
+        echo "  sudo mount /dev/sdX2 /mnt/boot  # Replace X2 with your boot partition"
+        return 1
+      fi
+      echo "✅ /mnt is mounted"
+      
+      echo ""
+      echo "Checking hardware configuration..."
+      if [ ! -f /mnt/etc/nixos/hardware-configuration.nix ]; then
+        echo "⚠️  hardware-configuration.nix not found. Generating..."
+        sudo nixos-generate-config --root /mnt
+        if [ $? -eq 0 ]; then
+          echo "✅ Hardware configuration generated"
+        else
+          echo "❌ Failed to generate hardware configuration"
+          return 1
+        fi
+      else
+        echo "✅ Hardware configuration exists"
+      fi
+      
+      echo ""
+      echo "Checking filesystem configuration..."
+      if grep -q "fileSystems" /mnt/etc/nixos/hardware-configuration.nix; then
+        echo "✅ Filesystem configuration found"
+        echo ""
+        echo "Current filesystem configuration:"
+        grep -A 10 "fileSystems" /mnt/etc/nixos/hardware-configuration.nix
+      else
+        echo "❌ No filesystem configuration found!"
+        echo "Re-generating hardware configuration..."
+        sudo nixos-generate-config --root /mnt --force
+        if grep -q "fileSystems" /mnt/etc/nixos/hardware-configuration.nix; then
+          echo "✅ Fixed! Filesystem configuration generated"
+        else
+          echo "❌ Still no filesystem configuration. Manual intervention required."
+          echo ""
+          echo "Please check:"
+          echo "1. Are your partitions properly mounted to /mnt?"
+          echo "2. Is the disk partitioned correctly?"
+          echo "3. Try running: sudo nixos-generate-config --root /mnt --force"
+          return 1
+        fi
+      fi
+      
+      echo ""
+      echo "🎉 Filesystem configuration looks good!"
+      echo "You can now proceed with installation."
+    }
+    
     # Quick installation script
     quick-install() {
-      echo "ShinigamiNix Quick Installation:"
-      echo "================================"
+      echo "🚀 ShinigamiNix Installation Guide"
+      echo "=================================="
       echo ""
-      echo "⚠️  WARNING: This will guide you through installation step by step."
-      echo "Make sure you have partitioned and mounted your disk first!"
+      echo "⚠️  This will install ShinigamiNix from the GitHub repository."
+      echo "Make sure your disk is partitioned and mounted to /mnt first!"
       echo ""
-      echo "Have you already:"
-      echo "1. Partitioned your disk (using gparted or fdisk)?"
-      echo "2. Formatted your partitions?"
-      echo "3. Mounted them to /mnt?"
+      echo "📋 Quick checklist:"
+      echo "1. ✓ Disk partitioned (EFI + root + swap)"
+      echo "2. ✓ Partitions formatted"
+      echo "3. ✓ Root mounted to /mnt"
+      echo "4. ✓ Boot partition mounted to /mnt/boot"
+      echo "5. ✓ Swap activated"
       echo ""
-      echo "If YES, press Enter to continue. If NO, type 'nixos-help' first."
+      echo "If you need help with partitioning, type 'nixos-help' first."
+      echo "Press Enter to continue with installation or Ctrl+C to abort."
       read
       
       echo ""
-      echo "Step 0: Checking network connectivity..."
+      echo "Step 1: Checking filesystem configuration..."
+      if ! fix-filesystems; then
+        echo "❌ Filesystem check failed. Please fix the issues above first."
+        return 1
+      fi
+      
+      echo ""
+      echo "Step 2: Checking network connectivity..."
       if ! ping -c 3 cache.nixos.org >/dev/null 2>&1; then
         echo "⚠️  Network issues detected!"
         echo "Would you like to run network diagnostics? (y/N)"
@@ -309,52 +388,46 @@ in
         if [[ "$net_choice" =~ ^[Yy]$ ]]; then
           fix-network
         else
-          echo "⚠️  Proceeding without network check - installation may fail or be slow"
+          echo "⚠️  Proceeding without network check - installation may fail"
         fi
       else
-        echo "✅ Network connection looks good"
-      fi
-      
-      echo "Step 1: Checking if /mnt is mounted..."
-      if ! mountpoint -q /mnt; then
-        echo "❌ Error: /mnt is not mounted!"
-        echo "Please mount your root partition first: mount /dev/sdX2 /mnt"
-        return 1
-      fi
-      echo "✅ /mnt is mounted"
-      
-      echo ""
-      echo "Step 2: Generating NixOS configuration..."
-      sudo nixos-generate-config --root /mnt
-      if [ $? -eq 0 ]; then
-        echo "✅ Configuration generated successfully"
-      else
-        echo "❌ Failed to generate configuration"
-        return 1
+        echo "✅ Network connection verified"
       fi
       
       echo ""
-      echo "Step 3: Configuration file created at /mnt/etc/nixos/configuration.nix"
-      echo "Would you like to edit it now? (y/N)"
-      read edit_choice
-      if [[ "$edit_choice" =~ ^[Yy]$ ]]; then
-        sudo nano /mnt/etc/nixos/configuration.nix
-      fi
-      
+      echo "Step 3: Installing ShinigamiNix..."
+      echo "This will download and install the complete ShinigamiNix system."
+      echo "The installation may take 15-30 minutes depending on your internet speed."
       echo ""
-      echo "Step 4: Starting NixOS installation..."
-      echo "This may take a while. Press Enter to continue."
+      echo "Press Enter to start installation or Ctrl+C to abort."
       read
-      sudo NIX_CONFIG="experimental-features = nix-command flakes" nixos-install
+      
+      echo "🔄 Starting installation..."
+      cd /mnt/etc/nixos
+      sudo NIX_CONFIG="experimental-features = nix-command flakes" nixos-install --flake github:SysGrimm/ShinigamiNix#installer
       
       if [ $? -eq 0 ]; then
         echo ""
-        echo "🎉 Installation completed successfully!"
-        echo "You can now reboot and remove the installation media."
-        echo "Type 'reboot' when ready."
+        echo "🎉 ShinigamiNix installation completed successfully!"
+        echo ""
+        echo "Next steps:"
+        echo "1. Set a root password: sudo nixos-enter --root /mnt -c 'passwd'"
+        echo "2. Create a user account: sudo nixos-enter --root /mnt -c 'useradd -m -G wheel username'"
+        echo "3. Set user password: sudo nixos-enter --root /mnt -c 'passwd username'"
+        echo "4. Reboot and remove installation media"
+        echo ""
+        echo "Type 'reboot' when ready to restart into ShinigamiNix!"
       else
-        echo "❌ Installation failed. Check the error messages above."
-        echo "💡 Tip: You can also try: sudo NIX_CONFIG='experimental-features = nix-command flakes' nixos-install"
+        echo ""
+        echo "❌ Installation failed!"
+        echo ""
+        echo "🔧 Troubleshooting tips:"
+        echo "1. Check filesystem configuration: fix-filesystems"
+        echo "2. Check network: fix-network"
+        echo "3. Try manual installation:"
+        echo "   sudo NIX_CONFIG='experimental-features = nix-command flakes' nixos-install --flake github:SysGrimm/ShinigamiNix#installer"
+        echo ""
+        echo "Check the error messages above for specific issues."
       fi
     }
     
@@ -401,7 +474,12 @@ in
       echo "   - Check WiFi: nmtui (NetworkManager TUI)"
       echo "   - Manual DNS: echo 'nameserver 8.8.8.8' | sudo tee /etc/resolv.conf"
       echo ""
-      echo "💡 TIPS:"
+      echo "� FILESYSTEM TROUBLESHOOTING:"
+      echo "   - Check/fix filesystems: fix-filesystems"
+      echo "   - Check mounts: lsblk or mount | grep /mnt"
+      echo "   - Re-generate config: sudo nixos-generate-config --root /mnt --force"
+      echo ""
+      echo "�💡 TIPS:"
       echo "   - Use 'lsblk' to see your disks"
       echo "   - Use 'quick-install' for guided installation"
       echo "   - Use 'gparted' for easy GUI partitioning"
