@@ -34,7 +34,8 @@ jobs:
 
       - name: Rename ISO with version
         run: |
-          mv result/iso/*.iso nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
+          cp result/iso/*.iso nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
+          chmod 644 nixos-hyprland-installer-${{ steps.version.outputs.version }}.iso
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
