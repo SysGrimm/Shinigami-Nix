@@ -24,7 +24,7 @@ jobs:
 
       - name: Build NixOS ISO
         run: |
-          nix build .#nixosConfigurations.installer.config.system.build.isoImage --print-build-logs
+          nix build .#nixosConfigurations.installer.config.system.build.isoImage --print-build-logs --accept-flake-config
 
       - name: Set ISO version
         id: version
