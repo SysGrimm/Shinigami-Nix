@@ -153,73 +153,8 @@ in
     # Text editors for config editing
     nano
     vim
-  ];
-
-  # Create desktop entries for installation
-  environment.etc = {
-    "skel/.config/autostart/welcome.desktop" = {
-      text = ''
-        [Desktop Entry]
-        Type=Application
-        Name=Welcome to ShinigamiNix
-        Comment=Installation and setup guide
-        Exec=kitty --title ShinigamiNix-Installer -e bash -c 'echo "Welcome to ShinigamiNix Live Environment!"; echo ""; echo "To install NixOS:"; echo "1. Run: sudo nixos-install"; echo "2. Or for GUI partitioning: gparted"; echo "3. Need help? Type: nixos-help"; echo ""; echo "Press Enter to continue..."; read'
-        Icon=distributor-logo-nixos
-        Terminal=false
-        Categories=System;
-        X-GNOME-Autostart-enabled=true
-      '';
-      mode = "0644";
-    };
     
-    "skel/Desktop/Install NixOS.desktop" = {
-      text = ''
-        [Desktop Entry]
-        Version=1.0
-        Type=Application
-        Name=Install NixOS
-        Comment=Guided NixOS Installation
-        Exec=kitty --title NixOS-Installer -e bash -c 'source /etc/bashrc; quick-install; echo "Press Enter to close..."; read'
-        Icon=system-software-install
-        Terminal=false
-        Categories=System;
-      '';
-      mode = "0755";
-    };
-    
-    "skel/Desktop/Partition Disks.desktop" = {
-      text = ''
-        [Desktop Entry]
-        Version=1.0
-        Type=Application
-        Name=Partition Disks
-        Comment=Partition disks with GParted
-        Exec=sudo gparted
-        Icon=gparted
-        Terminal=false
-        Categories=System;
-      '';
-      mode = "0755";
-    };
-    
-    "skel/Desktop/Terminal.desktop" = {
-      text = ''
-        [Desktop Entry]
-        Version=1.0
-        Type=Application
-        Name=Terminal
-        Comment=Open Terminal (type 'nixos-help' for installation guide)
-        Exec=kitty
-        Icon=utilities-terminal
-        Terminal=false
-        Categories=System;TerminalEmulator;
-      '';
-      mode = "0755";
-    };
-  };
-
-  # Add installer utility scripts
-  environment.systemPackages = environment.systemPackages ++ [
+    # Installer utility scripts
     (pkgs.writeScriptBin "fix-filesystems" ''
       #!/bin/bash
       
@@ -468,6 +403,69 @@ in
       echo ""
     '')
   ];
+
+  # Create desktop entries for installation
+  environment.etc = {
+    "skel/.config/autostart/welcome.desktop" = {
+      text = ''
+        [Desktop Entry]
+        Type=Application
+        Name=Welcome to ShinigamiNix
+        Comment=Installation and setup guide
+        Exec=kitty --title ShinigamiNix-Installer -e bash -c 'echo "Welcome to ShinigamiNix Live Environment!"; echo ""; echo "To install NixOS:"; echo "1. Run: sudo nixos-install"; echo "2. Or for GUI partitioning: gparted"; echo "3. Need help? Type: nixos-help"; echo ""; echo "Press Enter to continue..."; read'
+        Icon=distributor-logo-nixos
+        Terminal=false
+        Categories=System;
+        X-GNOME-Autostart-enabled=true
+      '';
+      mode = "0644";
+    };
+    
+    "skel/Desktop/Install NixOS.desktop" = {
+      text = ''
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=Install NixOS
+        Comment=Guided NixOS Installation
+        Exec=kitty --title NixOS-Installer -e bash -c 'source /etc/bashrc; quick-install; echo "Press Enter to close..."; read'
+        Icon=system-software-install
+        Terminal=false
+        Categories=System;
+      '';
+      mode = "0755";
+    };
+    
+    "skel/Desktop/Partition Disks.desktop" = {
+      text = ''
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=Partition Disks
+        Comment=Partition disks with GParted
+        Exec=sudo gparted
+        Icon=gparted
+        Terminal=false
+        Categories=System;
+      '';
+      mode = "0755";
+    };
+    
+    "skel/Desktop/Terminal.desktop" = {
+      text = ''
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=Terminal
+        Comment=Open Terminal (type 'nixos-help' for installation guide)
+        Exec=kitty
+        Icon=utilities-terminal
+        Terminal=false
+        Categories=System;TerminalEmulator;
+      '';
+      mode = "0755";
+    };
+  };
 
   # Live session user (inherits from minimal CD)
   # Enable sudo without password for live session
