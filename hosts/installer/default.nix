@@ -135,7 +135,7 @@ in
         Type=Application
         Name=Welcome to ShinigamiNix
         Comment=Installation and setup guide
-        Exec=kitty --title "ShinigamiNix Installer" -e bash -c "echo 'Welcome to ShinigamiNix Live Environment!'; echo ''; echo 'To install NixOS:'; echo '1. Run: sudo nixos-install'; echo '2. Or for GUI partitioning: gparted'; echo '3. Need help? Type: nixos-help'; echo ''; echo 'Press Enter to continue...'; read"
+        Exec=kitty --title ShinigamiNix-Installer -e bash -c "echo 'Welcome to ShinigamiNix Live Environment!'; echo ''; echo 'To install NixOS:'; echo '1. Run: sudo nixos-install'; echo '2. Or for GUI partitioning: gparted'; echo '3. Need help? Type: nixos-help'; echo ''; echo 'Press Enter to continue...'; read"
         Icon=distributor-logo-nixos
         Terminal=false
         Categories=System;
@@ -151,7 +151,7 @@ in
         Type=Application
         Name=Install NixOS
         Comment=Start NixOS Installation
-        Exec=kitty --title "NixOS Installer" -e sudo nixos-install
+        Exec=kitty --title NixOS-Installer -e sudo nixos-install
         Icon=system-software-install
         Terminal=false
         Categories=System;
