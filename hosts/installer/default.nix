@@ -77,13 +77,13 @@ in
   # Your requested applications
   environment.systemPackages = with pkgs; [
     # Desktop essentials
-    foot
-    waybar
-    rofi-wayland
-    mako
-    grim
-    slurp
-    wl-clipboard
+    kitty              # Modern GPU-accelerated terminal
+    waybar             # Status bar for Wayland
+    rofi-wayland       # Application launcher
+    mako               # Notification daemon
+    grim               # Screenshot tool
+    slurp              # Screen selection
+    wl-clipboard       # Clipboard utilities
     
     # Your applications
     brave
@@ -103,6 +103,15 @@ in
     pavucontrol
     brightnessctl
     xfce.thunar
+    
+    # Additional Hyprland utilities
+    wofi               # Alternative launcher (lighter than rofi)
+    swww               # Wallpaper daemon for Wayland
+    hyprpaper          # Wallpaper utility specifically for Hyprland
+    hypridle           # Idle daemon for Hyprland
+    hyprlock           # Screen locker for Hyprland
+    wlogout            # Logout menu for Wayland
+    swaynotificationcenter  # Notification center
   ];
 
   # Live session user (inherits from minimal CD)
